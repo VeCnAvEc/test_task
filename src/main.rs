@@ -31,6 +31,14 @@ fn main() {
     let mut operation = String::from("");
     let mut stock_market = StockMarket::new();
 
+    let data = test_data();
+
+    for offer in data.iter() {
+        stock_market.push_order(offer.clone());
+    }
+
+    // data.iter().map(move |offer| stock_market.push_order(*offer));
+
     loop {
         println!("Какую операцию вы хотите провести?\n\
             Введите 1 что-бы добавить ордер\n\
@@ -64,7 +72,6 @@ fn main() {
 }
 
 fn trading_currency(currency: &mut String, type_operation: &TypeOfOperation) -> Currency {
-    println!("{:?}", type_operation);
     'valid_type: loop {
         if *type_operation == TypeOfOperation::Buy {
             println!("Что вы хотите купить?\nВведите 1 что-бы купить USD\nВведите 2 что-бы купить EURO");
@@ -96,7 +103,7 @@ fn trading_currency(currency: &mut String, type_operation: &TypeOfOperation) -> 
 
 fn sell_or_buy(type_of_operation: &mut String, stock_market: &mut StockMarket) {
     'validation_sell_buy: loop {
-        println!("Введите 1 что-бы добавить ордер на покупку\nВведите 2 что-бы добавить ордер на продажу");
+        println!("Введите 1 что-бы добавить ордер на покупку\nВведите 2 что-бы добавить ордер на продажу\n\n");
         type_of_operation.clear();
         stdin().read_line(type_of_operation).unwrap();
 
@@ -105,14 +112,15 @@ fn sell_or_buy(type_of_operation: &mut String, stock_market: &mut StockMarket) {
                 let user = date_or_order(TypeOfOperation::Buy);
 
                 StockMarket::push_order(stock_market, Order {
+                    id: stock_market.order[stock_market.order.len() - 1].id + 1,
                     type_operation: TypeOfOperation::Buy,
                     amount: user.amount,
                     price: user.price,
-                    seller: user.seller,
+                    seller: String::from(user.seller.trim()),
                     currency: user.currency,
                 });
 
-                println!("{:#?}", stock_market);
+                println!("Ваше предложение было добавлено!\n\n");
                 break;
             },
 
@@ -120,14 +128,15 @@ fn sell_or_buy(type_of_operation: &mut String, stock_market: &mut StockMarket) {
                 let user = date_or_order(TypeOfOperation::Sell);
 
                 StockMarket::push_order(stock_market, Order {
+                    id: stock_market.order[stock_market.order.len() - 1].id + 1,
                     type_operation: TypeOfOperation::Sell,
                     amount: user.amount,
                     price: user.price,
-                    seller: user.seller,
+                    seller: String::from(user.seller.trim()),
                     currency: user.currency,
                 });
 
-                println!("{:#?}", stock_market);
+                println!("Ваше предложение было добавлено!\n\n");
                 break
             },
             Err(e) => {
@@ -148,7 +157,6 @@ fn date_or_order(type_operation: TypeOfOperation) -> User {
     let mut amount = String::from("");
     let mut price = String::from("");
 
-    println!("ddddd: {:?}", type_operation);
     let currency_sell = trading_currency(&mut currency_type, &type_operation);
 
     if type_operation == TypeOfOperation::Buy {
@@ -185,23 +193,38 @@ fn date_or_order(type_operation: TypeOfOperation) -> User {
 fn get_offer(stock_market: &Vec<Order>) {
     loop {
         let mut offer = String::from("");
-        println!("1 просмотреть все предложение\n2 просмотреть что доступно в продаже\n3 просмотреть что доступно в покупке");
+        println!("1 просмотреть все предложение\n2 просмотреть что доступно в продаже\n3 просмотреть что доступно в покупке\n0 что-бы вернуться назад\n\n");
         stdin().read_line(&mut offer).unwrap();
 
         match offer.trim().parse::<u64>() {
+            Ok(0) => {
+                break
+            }
             Ok(1) => {
                 if stock_market.len() == 0 {
                     println!("Не чего не найдено")
+                } else {
+                    helper_for((*stock_market.iter().collect::<Vec<&Order>>()).to_vec());
                 }
-                println!("{:#?}", stock_market);
             },
             Ok(2) => {
                 let filter_by_type_operation: Vec<&Order> = stock_market.iter().map(|of| of).filter(|el| el.type_operation == TypeOfOperation::Sell).collect();
-                println!("{:?}", filter_by_type_operation);
+
+                if filter_by_type_operation.len() == 0{
+                    println!("Не чего не найдено")
+                } else {
+                    helper_for(filter_by_type_operation);
+                }
+
             },
             Ok(3) => {
                 let filter_by_type_operation: Vec<&Order> = stock_market.iter().map(|of| of).filter(|el| el.type_operation == TypeOfOperation::Buy).collect();
-                println!("{:?}", filter_by_type_operation);
+
+                if filter_by_type_operation.len() == 0 {
+                    println!("Не чего не найдено")
+                } else {
+                    helper_for(filter_by_type_operation);
+                }
             },
             _ => {
                 println!("Введите цифру в диапазоне 1-3");
@@ -215,11 +238,89 @@ fn get_offer(stock_market: &Vec<Order>) {
     }
 }
 
+fn helper_for(filter_by_type_operation: Vec<&Order>) {
+    for offer in filter_by_type_operation {
+        println!("Номер сделки: {}\nИмя пользователя: {}\nПродаваемая валюта: {:?}\nКоличество выведенное на продажу: {}\nЦена: {}\n", offer.id, offer.seller, offer.currency, offer.amount, offer.price)
+    }
+}
+
 fn print_type_of<T>(_: &T) {
     println!("My type::::: {}", std::any::type_name::<T>())
 }
 
-
+fn test_data() -> Box<[Order; 10]> {
+    return Box::new([Order {
+        id: 1,
+        type_operation: TypeOfOperation::Sell,
+        amount: 500,
+        price: 510,
+        seller: "Imil".to_string(),
+        currency: Currency::USD
+    }, Order {
+        id: 2,
+        type_operation: TypeOfOperation::Buy,
+        amount: 630,
+        price: 600,
+        seller: "Oskar".to_string(),
+        currency: Currency::EURO
+    }, Order {
+        id: 3,
+        type_operation: TypeOfOperation::Buy,
+        amount: 1200,
+        price: 1300,
+        seller: "John".to_string(),
+        currency: Currency::USD
+    }, Order {
+        id: 4,
+        type_operation: TypeOfOperation::Sell,
+        amount: 737,
+        price: 400,
+        seller: "Kiril".to_string(),
+        currency: Currency::USD
+    }, Order {
+        id: 5,
+        type_operation: TypeOfOperation::Sell,
+        amount: 30,
+        price: 28,
+        seller: "Ivan".to_string(),
+        currency: Currency::EURO
+    }, Order {
+        id: 6,
+        type_operation: TypeOfOperation::Sell,
+        amount: 5000,
+        price: 5200,
+        seller: "Matvey".to_string(),
+        currency: Currency::USD
+    }, Order {
+        id: 7,
+        type_operation: TypeOfOperation::Buy,
+        amount: 2314,
+        price: 2250,
+        seller: "Sveta".to_string(),
+        currency: Currency::EURO
+    }, Order {
+        id: 8,
+        type_operation: TypeOfOperation::Buy,
+        amount: 322,
+        price: 312,
+        seller: "Diana".to_string(),
+        currency: Currency::EURO
+    }, Order {
+        id: 9,
+        type_operation: TypeOfOperation::Sell,
+        amount: 716,
+        price: 702,
+        seller: "Sofa".to_string(),
+        currency: Currency::EURO
+    }, Order {
+        id: 10,
+        type_operation: TypeOfOperation::Buy,
+        amount: 17,
+        price: 20,
+        seller: "Diana".to_string(),
+        currency: Currency::USD
+    }]);
+}
 
 
 

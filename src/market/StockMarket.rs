@@ -7,25 +7,21 @@ pub struct StockMarket {
     pub transaction: Vec<Transaction>
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Copy, Clone)]
 pub enum Currency {
     USD,
     EURO,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Copy, Clone)]
 pub enum TypeOfOperation {
     Sell,
     Buy
 }
 
-enum StringOrNumber {
-    String(String),
-    Number(u64)
-}
-
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Order {
+    pub id: u64,
     pub type_operation: TypeOfOperation,
     pub amount: u64,
     pub price: u64,
