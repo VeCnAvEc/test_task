@@ -10,8 +10,8 @@ use std::fmt::Debug;
 use crate::market::StockMarket::{Currency, StockMarketMethod};
 
 struct User {
-    amount: u64,
-    price: u64,
+    amount: f64,
+    price: f64,
     seller: String,
     currency: Currency
 }
@@ -45,6 +45,7 @@ fn main() {
             Введите 2 что-бы просмотреть предложение\n\
             Введите 3 что-бы получить разница между минимальной ценой продажи и максимальной ценой покупки
         ");
+
         operation.clear();
         stdin().read_line(&mut operation).unwrap();
         match operation.trim().parse::<u64>() {
@@ -56,9 +57,9 @@ fn main() {
                 let mut type_of_operation = String::from("");
                 get_offer(&stock_market.order);
             },
-            // Ok(3) => {
-            //     println!("200");
-            // },
+            Ok(3) => {
+                stock_market.get_spread();
+            },
             Err(e) => {
                 println!("Введены не коррктные символы")
             },
@@ -179,12 +180,12 @@ fn date_or_order(type_operation: TypeOfOperation) -> User {
         stdin().read_line(&mut price).unwrap();
     };
 
-    let amount_to_u64 = amount.trim().parse::<u64>().unwrap();
-    let price_to_u64 = price.trim().parse::<u64>().unwrap();
+    let amount_to_f64 = amount.trim().parse::<f64>().unwrap();
+    let price_to_f64 = price.trim().parse::<f64>().unwrap();
 
     User {
-        amount: amount_to_u64,
-        price: price_to_u64,
+        amount: amount_to_f64,
+        price: price_to_f64,
         seller,
         currency: currency_sell
     }
@@ -204,7 +205,35 @@ fn get_offer(stock_market: &Vec<Order>) {
                 if stock_market.len() == 0 {
                     println!("Не чего не найдено")
                 } else {
+                    let mut transaction_number = String::from("");
                     helper_for((*stock_market.iter().collect::<Vec<&Order>>()).to_vec());
+                    println!("Выберите номер сделки что-бы что-бы продолжить.\n0 вернуться назад");
+                    stdin().read_line(&mut transaction_number).unwrap();
+
+                    match transaction_number.trim().parse::<usize>() {
+                        Ok(num) => {
+                            let get_offer = stock_market.get(num - 1);
+
+                            if let Some(offer) = get_offer {
+                                println!("\nНомер сделки: {}\nколичесвто продоваймого \
+                                {:?} - {} {:?}\nЦена: {} {:?}\n",
+                                offer.id, offer.currency, offer.amount,
+                                offer.currency, offer.price, either!(offer.currency == Currency::USD => Currency::EURO; Currency::USD));
+
+                                let mut amount_buy = String::from("");
+                                println!("Введите количество {:?} которое вы хотите купить", offer.currency);
+                                stdin().read_line(&mut amount_buy).unwrap();
+                            } else {
+                                println!("Введён несуществующий номер сделки!");
+                            }
+                        }
+                        _ => {
+                            println!("что-то не то");
+                        }
+                        Err(e) => {
+                            println!("Введены не коррктные символы");
+                        }
+                    }
                 }
             },
             Ok(2) => {
@@ -244,6 +273,10 @@ fn helper_for(filter_by_type_operation: Vec<&Order>) {
     }
 }
 
+fn buy(amount: String) {
+
+}
+
 fn print_type_of<T>(_: &T) {
     println!("My type::::: {}", std::any::type_name::<T>())
 }
@@ -252,72 +285,72 @@ fn test_data() -> Box<[Order; 10]> {
     return Box::new([Order {
         id: 1,
         type_operation: TypeOfOperation::Sell,
-        amount: 500,
-        price: 510,
+        amount: 246.17,
+        price: 239.0,
         seller: "Imil".to_string(),
         currency: Currency::USD
     }, Order {
         id: 2,
         type_operation: TypeOfOperation::Buy,
-        amount: 630,
-        price: 600,
+        amount: 630.0,
+        price: 612.49,
         seller: "Oskar".to_string(),
         currency: Currency::EURO
     }, Order {
         id: 3,
         type_operation: TypeOfOperation::Buy,
-        amount: 1200,
-        price: 1300,
+        amount: 1200.0,
+        price: 1231.0,
         seller: "John".to_string(),
         currency: Currency::USD
     }, Order {
         id: 4,
         type_operation: TypeOfOperation::Sell,
-        amount: 737,
-        price: 400,
+        amount: 737.0,
+        price: 759.11,
         seller: "Kiril".to_string(),
         currency: Currency::USD
     }, Order {
         id: 5,
         type_operation: TypeOfOperation::Sell,
-        amount: 30,
-        price: 28,
+        amount: 30.0,
+        price: 30.0,
         seller: "Ivan".to_string(),
         currency: Currency::EURO
     }, Order {
         id: 6,
         type_operation: TypeOfOperation::Sell,
-        amount: 5000,
-        price: 5200,
+        amount: 5000.0,
+        price: 5200.0,
         seller: "Matvey".to_string(),
         currency: Currency::USD
     }, Order {
         id: 7,
         type_operation: TypeOfOperation::Buy,
-        amount: 2314,
-        price: 2250,
+        amount: 2314.0,
+        price: 2239.67,
         seller: "Sveta".to_string(),
         currency: Currency::EURO
     }, Order {
         id: 8,
         type_operation: TypeOfOperation::Buy,
-        amount: 322,
-        price: 312,
+        amount: 322.0,
+        price: 312.0,
         seller: "Diana".to_string(),
         currency: Currency::EURO
     }, Order {
         id: 9,
         type_operation: TypeOfOperation::Sell,
-        amount: 716,
-        price: 702,
+        amount: 716.15,
+        price: 702.0,
         seller: "Sofa".to_string(),
         currency: Currency::EURO
     }, Order {
         id: 10,
         type_operation: TypeOfOperation::Buy,
-        amount: 17,
-        price: 20,
-        seller: "Diana".to_string(),
+        amount: 17.15,
+        price: 20.0,
+        seller: "Aleksandr".to_string(),
         currency: Currency::USD
     }]);
 }
@@ -345,14 +378,14 @@ fn test_data() -> Box<[Order; 10]> {
 
 
 
-// fn convert_string_u64(amount: &Currency, mut quantity: String) -> u64 {
-//     let res: u64 = 'validation_quantity: loop {
+// fn convert_string_f64(amount: &Currency, mut quantity: String) -> f64 {
+//     let res: f64 = 'validation_quantity: loop {
 //         println!("Сколько {:?} вы хотите купить?", amount);
 //         stdin().read_line(&mut quantity).unwrap();
 //
-//         match quantity.trim().parse::<u64>().unwrap() {
-//             u64 => {
-//                 break u64;
+//         match quantity.trim().parse::<f64>().unwrap() {
+//             f64 => {
+//                 break f64;
 //             },
 //             _ => {
 //                 println!("Введите правильное число");
