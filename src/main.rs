@@ -7,7 +7,7 @@ use std::io::{stdin};
 use std::num::ParseIntError;
 use std::convert::From;
 use std::fmt::Debug;
-use crate::market::StockMarket::{Currency, StockMarketMethod};
+use crate::market::StockMarket::{Currency, StockMarketMethod, USD, EURO};
 
 struct User {
     amount: f64,
@@ -41,7 +41,7 @@ fn main() {
 
     loop {
         println!("Какую операцию вы хотите провести?\n\
-            Введите 1 что-бы добавить ордер\n\
+            Введите 1 что-бы добавить ордер на лимитную заявку\n\
             Введите 2 что-бы просмотреть предложение\n\
             Введите 3 что-бы получить разница между минимальной ценой продажи и максимальной ценой покупки
         ");
@@ -110,7 +110,7 @@ fn sell_or_buy(type_of_operation: &mut String, stock_market: &mut StockMarket) {
 
         match type_of_operation.trim().parse::<u64>() {
             Ok(1) => {
-                let user = date_or_order(TypeOfOperation::Buy);
+                let user = data_about_order(TypeOfOperation::Buy);
 
                 StockMarket::push_order(stock_market, Order {
                     id: stock_market.order[stock_market.order.len() - 1].id + 1,
@@ -119,6 +119,7 @@ fn sell_or_buy(type_of_operation: &mut String, stock_market: &mut StockMarket) {
                     price: user.price,
                     seller: String::from(user.seller.trim()),
                     currency: user.currency,
+                    by_course: user.amount / user.price
                 });
 
                 println!("Ваше предложение было добавлено!\n\n");
@@ -126,7 +127,7 @@ fn sell_or_buy(type_of_operation: &mut String, stock_market: &mut StockMarket) {
             },
 
             Ok(2) => {
-                let user = date_or_order(TypeOfOperation::Sell);
+                let user = data_about_order(TypeOfOperation::Sell);
 
                 StockMarket::push_order(stock_market, Order {
                     id: stock_market.order[stock_market.order.len() - 1].id + 1,
@@ -135,6 +136,7 @@ fn sell_or_buy(type_of_operation: &mut String, stock_market: &mut StockMarket) {
                     price: user.price,
                     seller: String::from(user.seller.trim()),
                     currency: user.currency,
+                    by_course: user.amount / user.price
                 });
 
                 println!("Ваше предложение было добавлено!\n\n");
@@ -152,13 +154,14 @@ fn sell_or_buy(type_of_operation: &mut String, stock_market: &mut StockMarket) {
     }
 }
 
-fn date_or_order(type_operation: TypeOfOperation) -> User {
+fn data_about_order(type_operation: TypeOfOperation) -> User {
     let mut seller = String::from("");
     let mut currency_type = String::from("");
     let mut amount = String::from("");
     let mut price = String::from("");
 
     let currency_sell = trading_currency(&mut currency_type, &type_operation);
+    let price_pir_unit = what_price(currency_sell);
 
     if type_operation == TypeOfOperation::Buy {
         println!("Введите ваше имя");
@@ -266,11 +269,35 @@ fn get_offer(stock_market: &Vec<Order>) {
         }
     }
 }
-
+// Количество выведенное на продажу
 fn helper_for(filter_by_type_operation: Vec<&Order>) {
     for offer in filter_by_type_operation {
-        println!("Номер сделки: {}\nИмя пользователя: {}\nПродаваемая валюта: {:?}\nКоличество выведенное на продажу: {}\nЦена: {}\n", offer.id, offer.seller, offer.currency, offer.amount, offer.price)
+        println!("Номер сделки: {}\nИмя пользователя: {}\n{} {:?}\
+        \n{} {} {:?}\nЦена: {} {:?}\nПо курсу: {} {:?} за 1 {:?}\n",
+            offer.id, offer.seller,
+            either!(offer.type_operation == TypeOfOperation::Buy => "Покупает: "; "Продаёт: "),
+            offer.currency,
+            either!(offer.type_operation == TypeOfOperation::Buy => "Купит: "; "Продаст: "),
+            offer.amount,
+            offer.currency,
+            offer.price,
+            either!(offer.currency == Currency::USD => Currency::EURO; Currency::USD),
+            offer.by_course,
+            offer.currency,
+            either!(offer.currency == Currency::USD => Currency::EURO; Currency::USD)
+        )
     }
+}
+
+fn what_price(currency: Currency) -> f64{
+    let mut price = String::from("");
+    println!("При каком курсе {:?} в {:?} открывать ордер?\n",
+             currency, either!(currency == Currency::USD => Currency::EURO; Currency::USD
+        ));
+    current_course();
+    stdin().read_line(&mut price).unwrap();
+
+    price.parse::<f64>().unwrap()
 }
 
 fn buy(amount: String) {
@@ -288,74 +315,86 @@ fn test_data() -> Box<[Order; 10]> {
         amount: 246.17,
         price: 239.0,
         seller: "Imil".to_string(),
-        currency: Currency::USD
+        currency: Currency::USD,
+        by_course: 246.17 / 239.0,
     }, Order {
         id: 2,
         type_operation: TypeOfOperation::Buy,
         amount: 630.0,
         price: 612.49,
         seller: "Oskar".to_string(),
-        currency: Currency::EURO
+        currency: Currency::EURO,
+        by_course: 630.0 / 612.49
     }, Order {
         id: 3,
         type_operation: TypeOfOperation::Buy,
         amount: 1200.0,
         price: 1231.0,
         seller: "John".to_string(),
-        currency: Currency::USD
+        currency: Currency::USD,
+        by_course: 1200.0 / 1231.0
     }, Order {
         id: 4,
         type_operation: TypeOfOperation::Sell,
         amount: 737.0,
         price: 759.11,
         seller: "Kiril".to_string(),
-        currency: Currency::USD
+        currency: Currency::USD,
+        by_course: 737.0 / 759.11
     }, Order {
         id: 5,
         type_operation: TypeOfOperation::Sell,
         amount: 30.0,
         price: 30.0,
         seller: "Ivan".to_string(),
-        currency: Currency::EURO
+        currency: Currency::EURO,
+        by_course: 30.0 / 30.0
     }, Order {
         id: 6,
         type_operation: TypeOfOperation::Sell,
         amount: 5000.0,
         price: 5200.0,
         seller: "Matvey".to_string(),
-        currency: Currency::USD
+        currency: Currency::USD,
+        by_course: 5000.0 / 5200.0
     }, Order {
         id: 7,
         type_operation: TypeOfOperation::Buy,
         amount: 2314.0,
         price: 2239.67,
         seller: "Sveta".to_string(),
-        currency: Currency::EURO
+        currency: Currency::EURO,
+        by_course: 2314.0 / 2239.67
     }, Order {
         id: 8,
         type_operation: TypeOfOperation::Buy,
         amount: 322.0,
         price: 312.0,
         seller: "Diana".to_string(),
-        currency: Currency::EURO
+        currency: Currency::EURO,
+        by_course: 322.0 / 312.0
     }, Order {
         id: 9,
         type_operation: TypeOfOperation::Sell,
         amount: 716.15,
         price: 702.0,
         seller: "Sofa".to_string(),
-        currency: Currency::EURO
+        currency: Currency::EURO,
+        by_course: 716.15 / 702.0
     }, Order {
         id: 10,
         type_operation: TypeOfOperation::Buy,
         amount: 17.15,
         price: 20.0,
         seller: "Aleksandr".to_string(),
-        currency: Currency::USD
+        currency: Currency::USD,
+        by_course: 17.15 / 20.0
     }]);
 }
 
-
+fn current_course() {
+    println!("Текущий курс.\nUSD: {} за 1 евро\nEUR: {} за 1 доллар\nКурс стстичен но смысл есть!", USD, EURO)
+}
 
 
 

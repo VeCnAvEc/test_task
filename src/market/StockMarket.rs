@@ -1,9 +1,18 @@
-use std::cmp::min;
-use std::fmt::Debug;
-use std::convert::From;
+extern crate serde_json;
 
-const EURO: f64 = 0.97; // 1 евро стоит 0.97 центов
-const USD: f64 = 1.03; // 1 доллар стоит 1.3 евро
+use reqwest::{Response, Result};
+use serde_json::Value;
+
+use std::fmt::Debug;
+
+pub const EURO: f64 = 0.97; // 1 евро стоит 0.97 центов
+pub const USD: f64 = 1.03; // 1 доллар стоит 1.3 евро
+
+#[derive(Debug)]
+pub struct Course {
+    eur: Value,
+    usd: Value
+}
 
 #[derive(Debug)]
 pub struct StockMarket {
@@ -30,7 +39,8 @@ pub struct Order {
     pub amount: f64,
     pub price: f64,
     pub seller: String,
-    pub currency: Currency
+    pub currency: Currency,
+    pub by_course: f64
 }
 
 #[derive(Debug)]
@@ -49,6 +59,10 @@ pub trait StockMarketMethod {
     fn get_spread(&self);
 
     fn process(transaction: Transaction) -> Transaction;
+
+    fn get_amount(&self, id: usize) -> &f64;
+
+    fn get_price(&self, id: usize) -> &f64;
 }
 // <T: Debug + From<f64> + Default>
 impl StockMarketMethod for StockMarket {
@@ -63,7 +77,7 @@ impl StockMarketMethod for StockMarket {
         &self.order.push(order);
     }
 
-    fn get_spread(&self) {
+    fn get_spread(&self) -> () {
         let stock_market = self;
 
         let mut min_sale_price_usd = 0.0;
@@ -85,6 +99,7 @@ impl StockMarketMethod for StockMarket {
 
         println!("usd: {}", max_purchase_price_usd);
         println!("euro: {}", max_purchase_price_euro);
+
     }
 
     fn process(transaction: Transaction) -> Transaction {
@@ -94,6 +109,14 @@ impl StockMarketMethod for StockMarket {
             amount: 0.0,
             price: 0.0
         }
+    }
+
+    fn get_amount(&self, id: usize) -> &f64 {
+        &self.order[id].amount
+    }
+
+    fn get_price(&self, id: usize) -> &f64 {
+        &self.order[id].price
     }
 }
 
@@ -129,4 +152,24 @@ fn max_purchase_price(curr: &Order, currency: Currency, mut max_purchase_price: 
     }
 
     return max_purchase_price
+}
+
+
+async fn get_course() -> Course {
+    let reqwest_url_usd = format!("https://currate.ru/api/?get=rates&pairs=USDEUR&key=359c7b11d0c4058826021fa09150141f");
+    let reqwest_url_eur = format!("https://currate.ru/api/?get=rates&pairs=EURUSD&key=359c7b11d0c4058826021fa09150141f");
+
+    let response_usd = reqwest::get(&reqwest_url_usd).await.expect("Error 1");
+    let response_eur = reqwest::get(&reqwest_url_eur).await.expect("Error 2");
+
+    let usd = response_usd.text().await.expect("Error 3");
+    let eur = response_eur.text().await.expect("Error 4");
+
+    let usd_in_json: Value = serde_json::from_str(&*usd).expect("Error 5");
+    let eur_in_json: Value = serde_json::from_str(&*eur).expect("Error 5");
+
+    Course {
+        eur: eur_in_json,
+        usd: usd_in_json
+    }
 }
