@@ -13,7 +13,8 @@ struct User {
     amount: f64,
     price: f64,
     seller: String,
-    currency: Currency
+    currency: Currency,
+    by_course: f64
 }
 
 macro_rules! either {
@@ -36,8 +37,6 @@ fn main() {
     for offer in data.iter() {
         stock_market.push_order(offer.clone());
     }
-
-    // data.iter().map(move |offer| stock_market.push_order(*offer));
 
     loop {
         println!("Какую операцию вы хотите провести?\n\
@@ -102,6 +101,14 @@ fn trading_currency(currency: &mut String, type_operation: &TypeOfOperation) -> 
     }
 }
 
+// Номер сделки: 11
+// Имя пользователя: danil
+// Покупает:  USD
+// Купит:  500 USD
+// Цена: 475 EURO
+// По курсу: 1.0526315789473684 USD за 1 EURO
+// 1.0526315789473684 USD за 1 EURO
+
 fn sell_or_buy(type_of_operation: &mut String, stock_market: &mut StockMarket) {
     'validation_sell_buy: loop {
         println!("Введите 1 что-бы добавить ордер на покупку\nВведите 2 что-бы добавить ордер на продажу\n\n");
@@ -119,7 +126,7 @@ fn sell_or_buy(type_of_operation: &mut String, stock_market: &mut StockMarket) {
                     price: user.price,
                     seller: String::from(user.seller.trim()),
                     currency: user.currency,
-                    by_course: user.amount / user.price
+                    by_course: user.by_course
                 });
 
                 println!("Ваше предложение было добавлено!\n\n");
@@ -136,7 +143,7 @@ fn sell_or_buy(type_of_operation: &mut String, stock_market: &mut StockMarket) {
                     price: user.price,
                     seller: String::from(user.seller.trim()),
                     currency: user.currency,
-                    by_course: user.amount / user.price
+                    by_course: user.by_course
                 });
 
                 println!("Ваше предложение было добавлено!\n\n");
@@ -169,28 +176,22 @@ fn data_about_order(type_operation: TypeOfOperation) -> User {
 
         println!("Сколько {:?} вы хотите купить?", currency_sell);
         stdin().read_line(&mut amount).unwrap();
-
-        println!("Назавите свою цену, она будет в {:?}", either!(currency_sell == Currency::USD => Currency::EURO; Currency::USD));
-        stdin().read_line(&mut price).unwrap();
     } else {
         println!("Введите ваше имя");
         stdin().read_line(&mut seller).unwrap();
 
         println!("Сколько {:?} вы хотите продать?", currency_sell);
         stdin().read_line(&mut amount).unwrap();
-
-        println!("За сколько вы хотите продать {:?}?", either!(currency_sell == Currency::USD => Currency::EURO; Currency::USD));
-        stdin().read_line(&mut price).unwrap();
     };
 
     let amount_to_f64 = amount.trim().parse::<f64>().unwrap();
-    let price_to_f64 = price.trim().parse::<f64>().unwrap();
 
     User {
         amount: amount_to_f64,
-        price: price_to_f64,
+        price: (amount_to_f64 / price_pir_unit * 100.0).round() / 100.0,
         seller,
-        currency: currency_sell
+        currency: currency_sell,
+        by_course: price_pir_unit
     }
 }
 
@@ -214,22 +215,26 @@ fn get_offer(stock_market: &Vec<Order>) {
                     stdin().read_line(&mut transaction_number).unwrap();
 
                     match transaction_number.trim().parse::<usize>() {
-                        Ok(num) => {
-                            let get_offer = stock_market.get(num - 1);
-
-                            if let Some(offer) = get_offer {
-                                println!("\nНомер сделки: {}\nколичесвто продоваймого \
-                                {:?} - {} {:?}\nЦена: {} {:?}\n",
-                                offer.id, offer.currency, offer.amount,
-                                offer.currency, offer.price, either!(offer.currency == Currency::USD => Currency::EURO; Currency::USD));
-
-                                let mut amount_buy = String::from("");
-                                println!("Введите количество {:?} которое вы хотите купить", offer.currency);
-                                stdin().read_line(&mut amount_buy).unwrap();
-                            } else {
-                                println!("Введён несуществующий номер сделки!");
-                            }
+                        Ok(0) => {
+                            break
                         }
+
+                        // Ok(num) => {
+                        //     let get_offer = stock_market.get(num - 1);
+                        //
+                        //     if let Some(offer) = get_offer {
+                        //         println!("\nНомер сделки: {}\nколичесвто продоваймого \
+                        //         {:?} - {} {:?}\nЦена: {} {:?}\n",
+                        //         offer.id, offer.currency, offer.amount,
+                        //         offer.currency, offer.price, either!(offer.currency == Currency::USD => Currency::EURO; Currency::USD));
+                        //
+                        //         let mut amount_buy = String::from("");
+                        //         println!("Введите количество {:?} которое вы хотите купить", offer.currency);
+                        //         stdin().read_line(&mut amount_buy).unwrap();
+                        //     } else {
+                        //         println!("Введён несуществующий номер сделки!");
+                        //     }
+                        // }
                         _ => {
                             println!("что-то не то");
                         }
@@ -274,7 +279,8 @@ fn helper_for(filter_by_type_operation: Vec<&Order>) {
     for offer in filter_by_type_operation {
         println!("Номер сделки: {}\nИмя пользователя: {}\n{} {:?}\
         \n{} {} {:?}\nЦена: {} {:?}\nПо курсу: {} {:?} за 1 {:?}\n",
-            offer.id, offer.seller,
+            offer.id,
+            offer.seller,
             either!(offer.type_operation == TypeOfOperation::Buy => "Покупает: "; "Продаёт: "),
             offer.currency,
             either!(offer.type_operation == TypeOfOperation::Buy => "Купит: "; "Продаст: "),
@@ -289,7 +295,7 @@ fn helper_for(filter_by_type_operation: Vec<&Order>) {
     }
 }
 
-fn what_price(currency: Currency) -> f64{
+fn what_price(currency: Currency) -> f64 {
     let mut price = String::from("");
     println!("При каком курсе {:?} в {:?} открывать ордер?\n",
              currency, either!(currency == Currency::USD => Currency::EURO; Currency::USD
@@ -297,7 +303,7 @@ fn what_price(currency: Currency) -> f64{
     current_course();
     stdin().read_line(&mut price).unwrap();
 
-    price.parse::<f64>().unwrap()
+    price.trim().parse::<f64>().unwrap()
 }
 
 fn buy(amount: String) {
@@ -316,7 +322,7 @@ fn test_data() -> Box<[Order; 10]> {
         price: 239.0,
         seller: "Imil".to_string(),
         currency: Currency::USD,
-        by_course: 246.17 / 239.0,
+        by_course: 246.17 / 239.0
     }, Order {
         id: 2,
         type_operation: TypeOfOperation::Buy,
