@@ -2,11 +2,8 @@ mod market;
 
 use market::StockMarket::{Transaction, Order, TypeOfOperation, StockMarket};
 
-use std::io;
 use std::io::{stdin};
-use std::num::ParseIntError;
 use std::convert::From;
-use std::fmt::Debug;
 use crate::market::StockMarket::{Currency, StockMarketMethod, USD, EURO};
 
 struct User {
@@ -126,10 +123,11 @@ fn sell_or_buy(type_of_operation: &mut String, stock_market: &mut StockMarket) {
                     price: user.price,
                     seller: String::from(user.seller.trim()),
                     currency: user.currency,
-                    by_course: user.by_course
+                    by_course: user.by_course as f32
                 });
 
                 println!("Ваше предложение было добавлено!\n\n");
+                stock_market.process();
                 break;
             },
 
@@ -143,7 +141,7 @@ fn sell_or_buy(type_of_operation: &mut String, stock_market: &mut StockMarket) {
                     price: user.price,
                     seller: String::from(user.seller.trim()),
                     currency: user.currency,
-                    by_course: user.by_course
+                    by_course: user.by_course as f32
                 });
 
                 println!("Ваше предложение было добавлено!\n\n");
@@ -188,7 +186,7 @@ fn data_about_order(type_operation: TypeOfOperation) -> User {
 
     User {
         amount: amount_to_f64,
-        price: (amount_to_f64 / price_pir_unit * 100.0).round() / 100.0,
+        price: (price_pir_unit * amount_to_f64 * 100.0).round() / 100.0,
         seller,
         currency: currency_sell,
         by_course: price_pir_unit
@@ -289,8 +287,8 @@ fn helper_for(filter_by_type_operation: Vec<&Order>) {
             offer.price,
             either!(offer.currency == Currency::USD => Currency::EURO; Currency::USD),
             offer.by_course,
+            either!(offer.currency == Currency::USD => Currency::EURO; Currency::USD),
             offer.currency,
-            either!(offer.currency == Currency::USD => Currency::EURO; Currency::USD)
         )
     }
 }
@@ -298,8 +296,8 @@ fn helper_for(filter_by_type_operation: Vec<&Order>) {
 fn what_price(currency: Currency) -> f64 {
     let mut price = String::from("");
     println!("При каком курсе {:?} в {:?} открывать ордер?\n",
-             currency, either!(currency == Currency::USD => Currency::EURO; Currency::USD
-        ));
+             either!(currency == Currency::USD => Currency::EURO; Currency::USD
+        ), currency);
     current_course();
     stdin().read_line(&mut price).unwrap();
 
@@ -318,11 +316,11 @@ fn test_data() -> Box<[Order; 10]> {
     return Box::new([Order {
         id: 1,
         type_operation: TypeOfOperation::Sell,
-        amount: 246.17,
-        price: 239.0,
+        amount: 542.0,
+        price: 552.84,
         seller: "Imil".to_string(),
         currency: Currency::USD,
-        by_course: 246.17 / 239.0
+        by_course: (552.84_f32 / 542.0_f32 * 100.0).round() / 100.0
     }, Order {
         id: 2,
         type_operation: TypeOfOperation::Buy,
@@ -330,23 +328,24 @@ fn test_data() -> Box<[Order; 10]> {
         price: 612.49,
         seller: "Oskar".to_string(),
         currency: Currency::EURO,
-        by_course: 630.0 / 612.49
+        by_course: (630.0_f32 / 612.49_f32 * 1000.0).round() / 1000.0
     }, Order {
         id: 3,
         type_operation: TypeOfOperation::Buy,
-        amount: 1200.0,
-        price: 1231.0,
+        amount: 423.53,
+        price: 432.0,
         seller: "John".to_string(),
         currency: Currency::USD,
-        by_course: 1200.0 / 1231.0
-    }, Order {
+        by_course: (1200.0 / 1231.0_f32 * 1000.0).round() / 1000.0
+    },
+        Order {
         id: 4,
         type_operation: TypeOfOperation::Sell,
-        amount: 737.0,
-        price: 759.11,
+        amount: 321.0,
+        price: 327.42,
         seller: "Kiril".to_string(),
         currency: Currency::USD,
-        by_course: 737.0 / 759.11
+        by_course: (327.42_f32 / 327.01_f32 * 1000.0).round() / 1000.0
     }, Order {
         id: 5,
         type_operation: TypeOfOperation::Sell,
@@ -354,7 +353,7 @@ fn test_data() -> Box<[Order; 10]> {
         price: 30.0,
         seller: "Ivan".to_string(),
         currency: Currency::EURO,
-        by_course: 30.0 / 30.0
+        by_course: (30.0_f32 / 30.0_f32 * 1000.0).round() / 1000.0
     }, Order {
         id: 6,
         type_operation: TypeOfOperation::Sell,
@@ -362,7 +361,7 @@ fn test_data() -> Box<[Order; 10]> {
         price: 5200.0,
         seller: "Matvey".to_string(),
         currency: Currency::USD,
-        by_course: 5000.0 / 5200.0
+        by_course: (5200.0_f32 / 5000.0_f32 * 1000.0).round() / 1000.0
     }, Order {
         id: 7,
         type_operation: TypeOfOperation::Buy,
@@ -370,7 +369,7 @@ fn test_data() -> Box<[Order; 10]> {
         price: 2239.67,
         seller: "Sveta".to_string(),
         currency: Currency::EURO,
-        by_course: 2314.0 / 2239.67
+        by_course: (2314.0 / 2239.67_f32 * 1000.0).round() / 1000.0
     }, Order {
         id: 8,
         type_operation: TypeOfOperation::Buy,
@@ -378,7 +377,7 @@ fn test_data() -> Box<[Order; 10]> {
         price: 312.0,
         seller: "Diana".to_string(),
         currency: Currency::EURO,
-        by_course: 322.0 / 312.0
+        by_course: (322.0 / 312.0_f32 * 1000.0).round() / 1000.0
     }, Order {
         id: 9,
         type_operation: TypeOfOperation::Sell,
@@ -386,7 +385,7 @@ fn test_data() -> Box<[Order; 10]> {
         price: 702.0,
         seller: "Sofa".to_string(),
         currency: Currency::EURO,
-        by_course: 716.15 / 702.0
+        by_course: (702.0_f32 / 716.15_f32 * 1000.0).round() / 1000.0
     }, Order {
         id: 10,
         type_operation: TypeOfOperation::Buy,
@@ -394,12 +393,14 @@ fn test_data() -> Box<[Order; 10]> {
         price: 20.0,
         seller: "Aleksandr".to_string(),
         currency: Currency::USD,
-        by_course: 17.15 / 20.0
-    }]);
+        by_course: (17.15 / 20.0_f32 * 1000.0).round() / 1000.0
+    }
+    ]);
+
 }
 
 fn current_course() {
-    println!("Текущий курс.\nUSD: {} за 1 евро\nEUR: {} за 1 доллар\nКурс стстичен но смысл есть!", USD, EURO)
+    println!("Текущий курс.\nUSD: {} центов за 1 евро\nEUR: {} евро за 1 доллар\nКурс стстичен но смысл есть!", USD, EURO)
 }
 
 
