@@ -126,6 +126,8 @@ fn sell_or_buy(type_of_operation: &mut String, stock_market: &mut StockMarket) {
                     by_course: user.by_course as f32
                 });
 
+                // println!("{} {:?} {} {} {:?} {:?} {}",stock_market.order[stock_market.order.len() - 1].id + 1,  TypeOfOperation::Buy, user.amount, user.price, String::from(user.seller.trim()), user.currency, user.by_course as f32);
+
                 println!("Ваше предложение было добавлено!\n\n");
                 stock_market.process();
                 break;
@@ -145,6 +147,7 @@ fn sell_or_buy(type_of_operation: &mut String, stock_market: &mut StockMarket) {
                 });
 
                 println!("Ваше предложение было добавлено!\n\n");
+                stock_market.process();
                 break
             },
             Err(e) => {
@@ -186,7 +189,7 @@ fn data_about_order(type_operation: TypeOfOperation) -> User {
 
     User {
         amount: amount_to_f64,
-        price: (price_pir_unit * amount_to_f64 * 100.0).round() / 100.0,
+                                                                                                                                                                                                                    price: (price_pir_unit * amount_to_f64 * 100.0).round() / 100.0,
         seller,
         currency: currency_sell,
         by_course: price_pir_unit
@@ -385,7 +388,7 @@ fn test_data() -> Box<[Order; 10]> {
         price: 702.0,
         seller: "Sofa".to_string(),
         currency: Currency::EURO,
-        by_course: (702.0_f32 / 716.15_f32 * 1000.0).round() / 1000.0
+        by_course: (716.15_f32 / 702.0_f32 * 1000.0).round() / 1000.0
     }, Order {
         id: 10,
         type_operation: TypeOfOperation::Buy,
@@ -393,7 +396,7 @@ fn test_data() -> Box<[Order; 10]> {
         price: 20.0,
         seller: "Aleksandr".to_string(),
         currency: Currency::USD,
-        by_course: (17.15 / 20.0_f32 * 1000.0).round() / 1000.0
+        by_course: (20.0_f32 / 17.15_f32 * 1000.0).round() / 1000.0
     }
     ]);
 
