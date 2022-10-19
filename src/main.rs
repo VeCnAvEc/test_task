@@ -1,4 +1,5 @@
 mod market;
+mod util;
 
 use market::StockMarket::{Transaction, Order, TypeOfOperation, StockMarket};
 
@@ -172,16 +173,16 @@ fn data_about_order(type_operation: TypeOfOperation) -> User {
     let price_pir_unit = what_price(currency_sell);
 
     if type_operation == TypeOfOperation::Buy {
-        println!("Введите ваше имя");
+        println!("\nВведите ваше имя\n");
         stdin().read_line(&mut seller).unwrap();
 
-        println!("Сколько {:?} вы хотите купить?", currency_sell);
+        println!("\nСколько {:?} вы хотите купить?\n", currency_sell);
         stdin().read_line(&mut amount).unwrap();
     } else {
-        println!("Введите ваше имя");
+        println!("\nВведите ваше имя\n");
         stdin().read_line(&mut seller).unwrap();
 
-        println!("Сколько {:?} вы хотите продать?", currency_sell);
+        println!("\nСколько {:?} вы хотите продать?\n", currency_sell);
         stdin().read_line(&mut amount).unwrap();
     };
 
@@ -199,7 +200,7 @@ fn data_about_order(type_operation: TypeOfOperation) -> User {
 fn get_offer(stock_market: &Vec<Order>) {
     loop {
         let mut offer = String::from("");
-        println!("1 просмотреть все предложение\n2 просмотреть что доступно в продаже\n3 просмотреть что доступно в покупке\n0 что-бы вернуться назад\n\n");
+        println!("\n\n1 просмотреть все предложение\n2 просмотреть что доступно в продаже\n3 просмотреть что доступно в покупке\n0 что-бы вернуться назад\n\n");
         stdin().read_line(&mut offer).unwrap();
 
         match offer.trim().parse::<u64>() {
@@ -208,11 +209,11 @@ fn get_offer(stock_market: &Vec<Order>) {
             }
             Ok(1) => {
                 if stock_market.len() == 0 {
-                    println!("Не чего не найдено")
+                    println!("\nНе чего не найдено\n")
                 } else {
                     let mut transaction_number = String::from("");
                     helper_for((*stock_market.iter().collect::<Vec<&Order>>()).to_vec());
-                    println!("Выберите номер сделки что-бы что-бы продолжить.\n0 вернуться назад");
+                    println!("\n0 вернуться назад\n");
                     stdin().read_line(&mut transaction_number).unwrap();
 
                     match transaction_number.trim().parse::<usize>() {
@@ -237,10 +238,10 @@ fn get_offer(stock_market: &Vec<Order>) {
                         //     }
                         // }
                         _ => {
-                            println!("что-то не то");
+                            println!("\nчто-то не то\n");
                         }
                         Err(e) => {
-                            println!("Введены не коррктные символы");
+                            println!("\nВведены не коррктные символы\n");
                         }
                     }
                 }
@@ -249,7 +250,7 @@ fn get_offer(stock_market: &Vec<Order>) {
                 let filter_by_type_operation: Vec<&Order> = stock_market.iter().map(|of| of).filter(|el| el.type_operation == TypeOfOperation::Sell).collect();
 
                 if filter_by_type_operation.len() == 0{
-                    println!("Не чего не найдено")
+                    println!("\nНе чего не найдено\n")
                 } else {
                     helper_for(filter_by_type_operation);
                 }
@@ -259,17 +260,17 @@ fn get_offer(stock_market: &Vec<Order>) {
                 let filter_by_type_operation: Vec<&Order> = stock_market.iter().map(|of| of).filter(|el| el.type_operation == TypeOfOperation::Buy).collect();
 
                 if filter_by_type_operation.len() == 0 {
-                    println!("Не чего не найдено")
+                    println!("\nНе чего не найдено\n")
                 } else {
                     helper_for(filter_by_type_operation);
                 }
             },
             _ => {
-                println!("Введите цифру в диапазоне 1-3");
+                println!("\nВведите цифру в диапазоне 0-3\n");
                 continue;
             },
             Err(e) => {
-                println!("Введите корректные символы");
+                println!("\nВведите корректные символы\n");
                 continue;
             }
         }
@@ -307,25 +308,31 @@ fn what_price(currency: Currency) -> f64 {
     price.trim().parse::<f64>().unwrap()
 }
 
-fn buy(amount: String) {
-
-}
-
 fn print_type_of<T>(_: &T) {
     println!("My type::::: {}", std::any::type_name::<T>())
 }
 
-fn test_data() -> Box<[Order; 10]> {
+fn test_data() -> Box<[Order; 11]> {
     return Box::new([Order {
         id: 1,
+        type_operation: TypeOfOperation::Sell,
+        amount: 10.0,
+        price: 10.0,
+        seller: "genesis block".to_string(),
+        currency: Currency::USD,
+        by_course: 10.0
+    },
+    Order {
+        id: 2,
         type_operation: TypeOfOperation::Sell,
         amount: 542.0,
         price: 552.84,
         seller: "Imil".to_string(),
         currency: Currency::USD,
         by_course: (552.84_f32 / 542.0_f32 * 100.0).round() / 100.0
-    }, Order {
-        id: 2,
+    },
+        Order {
+        id: 3,
         type_operation: TypeOfOperation::Buy,
         amount: 630.0,
         price: 612.49,
@@ -333,7 +340,7 @@ fn test_data() -> Box<[Order; 10]> {
         currency: Currency::EURO,
         by_course: (630.0_f32 / 612.49_f32 * 1000.0).round() / 1000.0
     }, Order {
-        id: 3,
+        id: 4,
         type_operation: TypeOfOperation::Buy,
         amount: 423.53,
         price: 432.0,
@@ -342,7 +349,7 @@ fn test_data() -> Box<[Order; 10]> {
         by_course: (1200.0 / 1231.0_f32 * 1000.0).round() / 1000.0
     },
         Order {
-        id: 4,
+        id: 5,
         type_operation: TypeOfOperation::Sell,
         amount: 321.0,
         price: 327.42,
@@ -350,7 +357,7 @@ fn test_data() -> Box<[Order; 10]> {
         currency: Currency::USD,
         by_course: (327.42_f32 / 327.01_f32 * 1000.0).round() / 1000.0
     }, Order {
-        id: 5,
+        id: 6,
         type_operation: TypeOfOperation::Sell,
         amount: 30.0,
         price: 30.0,
@@ -358,7 +365,7 @@ fn test_data() -> Box<[Order; 10]> {
         currency: Currency::EURO,
         by_course: (30.0_f32 / 30.0_f32 * 1000.0).round() / 1000.0
     }, Order {
-        id: 6,
+        id: 7,
         type_operation: TypeOfOperation::Sell,
         amount: 5000.0,
         price: 5200.0,
@@ -366,7 +373,7 @@ fn test_data() -> Box<[Order; 10]> {
         currency: Currency::USD,
         by_course: (5200.0_f32 / 5000.0_f32 * 1000.0).round() / 1000.0
     }, Order {
-        id: 7,
+        id: 8,
         type_operation: TypeOfOperation::Buy,
         amount: 2314.0,
         price: 2239.67,
@@ -374,7 +381,7 @@ fn test_data() -> Box<[Order; 10]> {
         currency: Currency::EURO,
         by_course: (2314.0 / 2239.67_f32 * 1000.0).round() / 1000.0
     }, Order {
-        id: 8,
+        id: 9,
         type_operation: TypeOfOperation::Buy,
         amount: 322.0,
         price: 312.0,
@@ -382,7 +389,7 @@ fn test_data() -> Box<[Order; 10]> {
         currency: Currency::EURO,
         by_course: (322.0 / 312.0_f32 * 1000.0).round() / 1000.0
     }, Order {
-        id: 9,
+        id: 10,
         type_operation: TypeOfOperation::Sell,
         amount: 716.15,
         price: 702.0,
@@ -390,7 +397,7 @@ fn test_data() -> Box<[Order; 10]> {
         currency: Currency::EURO,
         by_course: (716.15_f32 / 702.0_f32 * 1000.0).round() / 1000.0
     }, Order {
-        id: 10,
+        id: 11,
         type_operation: TypeOfOperation::Buy,
         amount: 17.15,
         price: 20.0,
@@ -403,7 +410,7 @@ fn test_data() -> Box<[Order; 10]> {
 }
 
 fn current_course() {
-    println!("Текущий курс.\nUSD: {} центов за 1 евро\nEUR: {} евро за 1 доллар\nКурс стстичен но смысл есть!", USD, EURO)
+    println!("Текущий курс.\nUSD: {} центов за 1 евро\nEUR: {} евро за 1 доллар\nКурс стстичен но смысл есть!\n\n", USD, EURO)
 }
 
 
