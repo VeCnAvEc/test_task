@@ -110,7 +110,7 @@ impl Transaction {
                     Transaction {
                         seller: either!(deal_id.type_operation == TypeOfOperation::Sell => offer_id.seller.clone(); deal_id.seller.clone()),
                         buyer: either!(deal_id.type_operation == TypeOfOperation::Buy => offer_id.seller.clone(); deal_id.seller.clone()),
-                        amount: either!(deal_id.type_operation == TypeOfOperation::Sell => deal_id.by_course as f64 * offer.amount; (deal_id.amount / deal_id.price) * deal_id.price),
+                        amount: either!(deal_id.type_operation == TypeOfOperation::Sell => deal_id.by_course as f64 * offer_id.amount; (deal_id.amount / deal_id.price) * deal_id.price),
                         price: either!(deal_id.type_operation == TypeOfOperation::Sell => deal_id.by_course as f64 * offer_id.amount; (deal_id.amount / deal_id.price) * deal_id.price)
                     }
                 },
