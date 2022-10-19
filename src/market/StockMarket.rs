@@ -194,45 +194,51 @@ impl StockMarketMethod for StockMarket {
                 }
 
                 id_good_deal = good_deal(&good_deals, id_good_deal, &deal);
+                println!("{}", id_good_deal);
 
-                if id_good_deal - 1 != offer as u64 {
-                    if deal[id_good_deal as usize - 1].type_operation == TypeOfOperation::Buy {
+                if id_good_deal != 0 {
+                    if id_good_deal - 1 != offer as u64 {
+                        if deal[id_good_deal as usize - 1].type_operation == TypeOfOperation::Buy {
 
-                        if deal[id_good_deal as usize - 1].price < deal[offer].amount {
-                            let new_transaction = Transaction::create_transaction(LogicalOperations::Less, &deal[offer as usize], &deal[id_good_deal as usize - 1]);
+                            if deal[id_good_deal as usize - 1].price < deal[offer].amount {
+                                let new_transaction = Transaction::create_transaction(LogicalOperations::Less, &deal[offer as usize], &deal[id_good_deal as usize - 1]);
 
-                            deal[offer].amount = deal[offer].amount - deal[id_good_deal as usize - 1].price;
-                            deal[offer].price =  rounding_multiplication_f64(deal[offer].amount, deal[offer].by_course as f64);
+                                deal[offer].amount = deal[offer].amount - deal[id_good_deal as usize - 1].price;
+                                deal[offer].price =  rounding_multiplication_f64(deal[offer].amount, deal[offer].by_course as f64);
 
-                            deal[id_good_deal as usize - 1].price = 0.0;
-                            deal[id_good_deal as usize - 1].amount = 0.0;
+                                deal[id_good_deal as usize - 1].price = 0.0;
+                                deal[id_good_deal as usize - 1].amount = 0.0;
 
-                            self.transaction.push(new_transaction);
-                        } else if deal[offer].price > deal[id_good_deal as usize - 1].amount {
-                            println!("2d");
-                            let new_transaction = Transaction::create_transaction(LogicalOperations::Greater, &deal[offer], &deal[id_good_deal as usize - 1]);
+                                self.transaction.push(new_transaction);
+                            } else if deal[offer].price > deal[id_good_deal as usize - 1].amount {
+                                println!("2d");
+                                let new_transaction = Transaction::create_transaction(LogicalOperations::Greater, &deal[offer], &deal[id_good_deal as usize - 1]);
 
-                            deal[id_good_deal as usize - 1].amount = deal[offer].price - deal[id_good_deal as usize - 1].amount;
-                            deal[id_good_deal as usize - 1].amount = 0.0;
+                                deal[id_good_deal as usize - 1].amount = deal[offer].price - deal[id_good_deal as usize - 1].amount;
+                                deal[id_good_deal as usize - 1].amount = 0.0;
 
-                            deal[offer].amount = deal[offer].amount - deal[id_good_deal as usize - 1].price;
+                                deal[offer].amount = deal[offer].amount - deal[id_good_deal as usize - 1].price;
 
-                            self.transaction.push(new_transaction);
-                        } else if deal[offer].price == deal[id_good_deal as usize - 1].amount {
-                            println!("3d");
-                            let new_transaction = Transaction::create_transaction(LogicalOperations::Equal,&deal[offer as usize], &deal[id_good_deal as usize - 1]);
+                                self.transaction.push(new_transaction);
+                            } else if deal[offer].price == deal[id_good_deal as usize - 1].amount {
+                                println!("3d");
+                                let new_transaction = Transaction::create_transaction(LogicalOperations::Equal,&deal[offer as usize], &deal[id_good_deal as usize - 1]);
 
-                            deal[id_good_deal as usize - 1].amount = 0.0;
-                            deal[offer].amount = 0.0;
+                                deal[id_good_deal as usize - 1].amount = 0.0;
+                                deal[offer].amount = 0.0;
 
-                            self.transaction.push(new_transaction);
+                                self.transaction.push(new_transaction);
+                            }
                         }
-                    }
 
-                    // let remove_order = deal.iter().position(|zero_order| zero_order.amount == 0.0).unwrap();
-                    // deal.remove(remove_order);
-                    // continue;
+                        // let remove_order = deal.iter().position(|zero_order| zero_order.amount == 0.0).unwrap();
+                        // deal.remove(remove_order);
+                        // continue;
+                    }
+                } else {
+                    println!("Выгодной сделки не были найдены но ваш ордер останется активным и будет закрыт когда найдётся выгодная сделка");
                 }
+
 
             } else if deal[offer].type_operation == TypeOfOperation::Sell {
                 for i in 0..deal.len() {
@@ -256,17 +262,21 @@ impl StockMarketMethod for StockMarket {
                 id_good_deal = good_deal(&good_deals, id_good_deal, &deal);
             }
 
-            if id_good_deal != offer as u64 {
-                if deal[id_good_deal as usize - 1].amount < deal[offer as usize].amount {
-                    deal[offer as usize].amount -= deal[id_good_deal as usize - 1].amount;
-                    deal[id_good_deal as usize - 1].amount = 0.0;
-                } else if deal[id_good_deal as usize - 1].amount > deal[offer as usize].amount {
-                    deal[id_good_deal as usize - 1].amount -= deal[offer as usize].amount;
-                    deal[offer as usize].amount = 0.0;
-                } else if deal[id_good_deal as usize - 1].amount == deal[offer as usize].amount{
-                    deal[offer as usize].amount = 0.0;
-                    deal[id_good_deal as usize - 1].amount -= 0.0;
+            if id_good_deal != 0 {
+                if id_good_deal != offer as u64 {
+                    if deal[id_good_deal as usize - 1].amount < deal[offer as usize].amount {
+                        deal[offer as usize].amount -= deal[id_good_deal as usize - 1].amount;
+                        deal[id_good_deal as usize - 1].amount = 0.0;
+                    } else if deal[id_good_deal as usize - 1].amount > deal[offer as usize].amount {
+                        deal[id_good_deal as usize - 1].amount -= deal[offer as usize].amount;
+                        deal[offer as usize].amount = 0.0;
+                    } else if deal[id_good_deal as usize - 1].amount == deal[offer as usize].amount{
+                        deal[offer as usize].amount = 0.0;
+                        deal[id_good_deal as usize - 1].amount -= 0.0;
+                    }
                 }
+            } else {
+                println!("Выгодной сделки не были найдены но ваш ордер останется активным и будет закрыт когда найдётся выгодная сделка");
             }
 
             println!("Transaction my wife{:?}", self.transaction);
@@ -338,7 +348,8 @@ fn max_purchase_price(curr: &Order, currency: Currency, mut max_purchase_price: 
 fn good_deal(good_deals: &Vec<Order>, mut id_good_deal: u64, deal: &Vec<Order>) -> u64 {
     for ord in good_deals {
         if id_good_deal == 0 {
-            id_good_deal = ord.id
+            id_good_deal = ord.id;
+            continue;
         }
         if ord.type_operation == TypeOfOperation::Sell {
             if id_good_deal == 0 {
