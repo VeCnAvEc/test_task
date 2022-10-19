@@ -52,7 +52,8 @@ pub struct Transaction {
 pub enum LogicalOperations {
     Greater,
     Less,
-    Equal
+    Equal,
+    OfPriceLess
 }
 
 macro_rules! either {
@@ -120,8 +121,18 @@ impl Transaction {
                     Transaction {
                         seller: either!(deal_id.type_operation == TypeOfOperation::Sell => offer_id.seller.clone(); deal_id.seller.clone()),
                         buyer: either!(deal_id.type_operation == TypeOfOperation::Buy => offer_id.seller.clone(); deal_id.seller.clone()),
-                        amount: deal_id.price,
+                        amount: offer_id.price,
                         price: either!(deal_id.type_operation == TypeOfOperation::Sell => rounding_multiplication_f64(deal_id.by_course as f64, offer_id.amount); ((deal_id.amount as f64 / deal_id.price) * offer_id.amount * 1000.0).round() / 1000.0)
+                    }
+                },
+                LogicalOperations::OfPriceLess => {
+                    println!("create transaction 4");
+
+                    Transaction {
+                        seller: either!(deal_id.type_operation == TypeOfOperation::Sell => offer_id.seller.clone(); deal_id.seller.clone()),
+                        buyer: either!(deal_id.type_operation == TypeOfOperation::Buy => offer_id.seller.clone(); deal_id.seller.clone()),
+                        amount: offer_id.amount,
+                        price: either!(deal_id.type_operation == TypeOfOperation::Sell => rounding_multiplication_f64(deal_id.by_course as f64, deal_id.amount); ((deal_id.amount as f64 / deal_id.price) * offer_id.amount * 1000.0).round() / 1000.0)
                     }
                 }
             };
@@ -170,7 +181,6 @@ impl StockMarketMethod for StockMarket {
     fn process(&mut self) {
         let mut id_good_deal = 0;
         let mut good_deals: Vec<Order> = Vec::new();
-        let mut transaction: Transaction = Transaction::new("".to_string(), "".to_string(), 0.0, 0.0);
         let mut deal = &mut self.order;
 
         for offer in 11..deal.len() {
@@ -198,9 +208,9 @@ impl StockMarketMethod for StockMarket {
 
                 if id_good_deal != 0 {
                     if id_good_deal - 1 != offer as u64 {
-                        if deal[id_good_deal as usize - 1].type_operation == TypeOfOperation::Buy {
-
+                        // if deal[id_good_deal as usize - 1].type_operation == TypeOfOperation::Buy {
                             if deal[id_good_deal as usize - 1].price < deal[offer].amount {
+                                println!("прайс меньше суммы");
                                 let new_transaction = Transaction::create_transaction(LogicalOperations::Less, &deal[offer as usize], &deal[id_good_deal as usize - 1]);
 
                                 deal[offer].amount = deal[offer].amount - deal[id_good_deal as usize - 1].price;
@@ -211,6 +221,7 @@ impl StockMarketMethod for StockMarket {
 
                                 self.transaction.push(new_transaction);
                             } else if deal[offer].price > deal[id_good_deal as usize - 1].amount {
+                                println!("прайс больше суммы");
                                 println!("2d");
                                 let new_transaction = Transaction::create_transaction(LogicalOperations::Greater, &deal[offer], &deal[id_good_deal as usize - 1]);
 
@@ -221,6 +232,7 @@ impl StockMarketMethod for StockMarket {
 
                                 self.transaction.push(new_transaction);
                             } else if deal[offer].price == deal[id_good_deal as usize - 1].amount {
+                                println!("прайс равен сумме");
                                 println!("3d");
                                 let new_transaction = Transaction::create_transaction(LogicalOperations::Equal,&deal[offer as usize], &deal[id_good_deal as usize - 1]);
 
@@ -228,12 +240,26 @@ impl StockMarketMethod for StockMarket {
                                 deal[offer].amount = 0.0;
 
                                 self.transaction.push(new_transaction);
-                            }
-                        }
+                            } else if deal[id_good_deal as usize - 1].price > deal[offer].amount{
+                                let new_transaction = Transaction::create_transaction(LogicalOperations::OfPriceLess, &deal[offer as usize], &deal[id_good_deal as usize - 1]);
 
-                        // let remove_order = deal.iter().position(|zero_order| zero_order.amount == 0.0).unwrap();
-                        // deal.remove(remove_order);
-                        // continue;
+                                deal[id_good_deal as usize - 1].amount = ((deal[id_good_deal as usize - 1].amount - deal[offer].price) * 1000.0).round() / 1000.0;
+                                deal[id_good_deal as usize - 1].price =  rounding_multiplication_f64(deal[id_good_deal as usize - 1].amount, deal[id_good_deal as usize - 1].by_course as f64);
+
+                                deal[offer].price = 0.0;
+                                deal[offer].amount = 0.0;
+                                self.transaction.push(new_transaction);
+                            }
+
+                            if deal[id_good_deal as usize - 1].amount == 0.0 {
+                                deal.remove((id_good_deal - 1) as usize);
+                            } else if deal[offer].amount == 0.0 {
+                                deal.remove(offer);
+                            }
+
+                            id_good_deal = 0;
+                            continue;
+                        // }
                     }
                 } else {
                     println!("Выгодной сделки не были найдены но ваш ордер останется активным и будет закрыт когда найдётся выгодная сделка");
@@ -283,8 +309,6 @@ impl StockMarketMethod for StockMarket {
 
             good_deals = vec![];
         }
-
-        self.push_transaction(transaction);
     }
 
     fn push_transaction(&mut self, transaction: Transaction) {
