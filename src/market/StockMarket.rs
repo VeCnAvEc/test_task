@@ -157,12 +157,11 @@ impl StockMarketMethod for StockMarket {
             max_purchase_price_euro = max_purchase_price(curr, Currency::EURO, max_purchase_price_euro);
         }
 
-        println!("минимальная цена продажи usd: {}", (min_sale_price_usd * 1000.0).round() / 1000.0);
-        println!("минимальная цена продажи euro: {}\n", (min_sale_price_euro * 1000.0).round() / 1000.0);
+        println!("usd: {}", min_sale_price_usd);
+        println!("euro: {}", min_sale_price_euro);
 
-        println!("максимальна цена покупки usd: {}", (max_purchase_price_usd * 1000.0).round() / 1000.0);
-        println!("максимальная цена покупки euro: {}\n", (max_purchase_price_euro * 1000.0).round() / 1000.0);
-
+        println!("usd: {}", max_purchase_price_usd);
+        println!("euro: {}", max_purchase_price_euro);
     }
 
     fn process(&mut self) {
@@ -345,18 +344,17 @@ impl StockMarketMethod for StockMarket {
 fn min_sale_price(curr: &Order, currency: Currency, mut min_sale_price: f64) -> f64{
 
 
-    // if currency == Currency::EURO {
-    // }
-    // if curr.currency == currency && curr.type_operation == TypeOfOperation::Sell {
-    //     // let amount_per_price = curr.amount / EURO;
-    //     let current_offer_rate = curr.amount / curr.price;
-    //
-    //     if current_offer_rate < min_sale_price && min_sale_price != 0.0 {
-    //         min_sale_price = current_offer_rate;
-    //     } else if min_sale_price == 0.0 {
-    //         min_sale_price = current_offer_rate;
-    //     }
-    // }
+    if currency == Currency::EURO {
+    }
+    if curr.currency == currency && curr.type_operation == TypeOfOperation::Sell {
+        let current_offer_rate = curr.amount / curr.price;
+
+        if current_offer_rate < min_sale_price && min_sale_price != 0.0 {
+            min_sale_price = current_offer_rate;
+        } else if min_sale_price == 0.0 {
+            min_sale_price = current_offer_rate;
+        }
+    }
 
     return min_sale_price
 }
