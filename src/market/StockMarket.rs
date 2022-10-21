@@ -3,8 +3,8 @@ use crate::util::rounding::rounding_multiplication_f64;
 use super::super::util::rounding::{rounding_dividing_f64};
 #[macro_use] use super::super::either;
 
-pub const EURO: f64 = 1.02; // 1 евро стоит 1.3 центов
-pub const USD: f64 = 0.97; // 1 доллар стоит 0.97 евро
+pub const EURO: f64 = 1.02;
+pub const USD: f64 = 0.97;
 
 #[derive(Debug)]
 pub struct StockMarket {
@@ -198,15 +198,6 @@ impl StockMarketMethod for StockMarket {
                     id_good_deal = good_deal(&mut good_deals, id_good_deal, &deal, TypeOfOperation::Sell);
                     index +=1;
 
-                    // for rm in 0..good_deals.len(){
-                    //     if good_deals.len() == rm {
-                    //         break;
-                    //     }
-                    //     if good_deals[rm].id == id_good_deal {
-                    //         good_deals.remove(rm);
-                    //     }
-                    // }
-
                     remove_el_good_deals(&mut good_deals, id_good_deal);
 
                     if id_good_deal > 0 {
@@ -284,16 +275,6 @@ impl StockMarketMethod for StockMarket {
                     id_good_deal = good_deal(&mut good_deals, id_good_deal, &deal, TypeOfOperation::Buy);
 
                     remove_el_good_deals(&mut good_deals, id_good_deal);
-
-
-                    // for rm in 0..good_deals.len(){
-                    //     if good_deals.len() == rm {
-                    //         break;
-                    //     }
-                    //     if good_deals[rm].id == id_good_deal {
-                    //         good_deals.remove(rm);
-                    //     }
-                    // }
 
                     if deal[id_good_deal as usize -1].amount != 0.0 && deal[offer].amount != 0.0 {
                         if id_good_deal > 0 {
